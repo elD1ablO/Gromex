@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public class FailZone : MonoBehaviour
+public class CatchZone : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D other)
     {
-        PlayerController.OnFailCatch?.Invoke();
+        PlayerController.OnCoinCatch?.Invoke();
         Destroy(other.gameObject);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public static Action OnCoinCatch;
-    public static Action OnFailCatch;   
+    public static Action OnFailCatch;
 
     [Header("Player sprites")]
     [SerializeField] private Sprite _bottomPlayerSprite;
@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Catch colliders (1-4)")]
     [SerializeField] private BoxCollider2D[] _catchColliders;
+    // РїРѕСЂСЏРґ: 1,2,3,4 СЏРє РїРѕР·РёС†С–С—
 
     private int _currentPosition = 1;
 
@@ -32,7 +33,6 @@ public class PlayerController : MonoBehaviour
         if (_playerImage == null)
             return;
 
-        // Спрайт + напрямок
         switch (_currentPosition)
         {
             case 1:
@@ -56,7 +56,6 @@ public class PlayerController : MonoBehaviour
                 break;
         }
 
-        // Активуємо тільки один catch-collider
         if (_catchColliders != null)
         {
             for (int i = 0; i < _catchColliders.Length; i++)
@@ -69,9 +68,5 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {       
-        OnCoinCatch?.Invoke();
-    }
 }
+
