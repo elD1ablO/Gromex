@@ -1,40 +1,43 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     public static Action OnCoinCatch;
-    public static Action OnFailCatch;
+    public static Action OnFailCatch;   
 
-    [SerializeField] private BoxCollider2D[] _failColliders;
-
+    [Header("Player sprites")]
     [SerializeField] private Sprite _bottomPlayerSprite;
     [SerializeField] private Sprite _topPlayerSprite;
-
     [SerializeField] private SpriteRenderer _playerImage;
 
-    private BoxCollider2D _catchCollider;
-    private Vector3 _defaultScale;
+    [Header("Catch colliders (1-4)")]
+    [SerializeField] private BoxCollider2D[] _catchColliders;
+
+    private int _currentPosition = 1;
 
     private void Start()
     {
-        _catchCollider = GetComponent<BoxCollider2D>();
-            
+        UpdateVisualsAndColliders();
     }
 
     public void PlayerPosition(int pos)
     {
+        _currentPosition = Mathf.Clamp(pos, 1, 4);
+        UpdateVisualsAndColliders();
+    }
+
+    private void UpdateVisualsAndColliders()
+    {
         if (_playerImage == null)
             return;
 
-
-        switch (pos)
+        // Спрайт + напрямок
+        switch (_currentPosition)
         {
             case 1:
                 _playerImage.sprite = _topPlayerSprite;
                 _playerImage.flipX = false;
-                  
                 break;
 
             case 2:
@@ -51,40 +54,24 @@ public class PlayerController : MonoBehaviour
                 _playerImage.sprite = _bottomPlayerSprite;
                 _playerImage.flipX = true;
                 break;
-
-            default:
-                _playerImage.sprite = _bottomPlayerSprite;
-                _playerImage.flipX = false;
-                break;
         }
 
-    }
+        // Активуємо тільки один catch-collider
+        if (_catchColliders != null)
+        {
+            for (int i = 0; i < _catchColliders.Length; i++)
+            {
+                if (_catchColliders[i] == null)
+                    continue;
 
-    private void Update()
-    {
-        ProcessFail();
+                bool shouldBeActive = (i == _currentPosition - 1);
+                _catchColliders[i].gameObject.SetActive(shouldBeActive);
+            }
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
-    {      
+    {       
         OnCoinCatch?.Invoke();
-    }
-
-    private void ProcessFail()
-    {
-        if (_catchCollider == null || _failColliders == null)
-            return;
-
-        for (int i = 0; i < _failColliders.Length; i++)
-        {
-            if (_failColliders[i] == null)
-                continue;
-
-            if (_catchCollider.IsTouching(_failColliders[i]))
-            {
-                OnFailCatch?.Invoke();
-                break;
-            }
-        }
     }
 }
