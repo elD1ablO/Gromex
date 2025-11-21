@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class GameManager : MonoBehaviour
 {
@@ -165,5 +168,61 @@ public class GameManager : MonoBehaviour
         _currentScore = 0;
         _isTimeMode = false;
         _timeLeft = 0f;
+
+        StartCoroutine(SendFinishRequest(_currentScore));
     }
+    private IEnumerator SendFinishRequest(int finalScore)
+    {
+        if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
+        {
+            Debug.LogError("FinishGame: Missing session data.");
+            yield break;
+        }
+
+        string url = $"https://uni.gromex.io/28fk2/api/game/ticket/{SessionData.TicketId}/finish";
+
+        var body = new FinishRequest
+        {
+            game_token = SessionData.GameToken,
+            outcome = "win",
+            payout = finalScore,   //  payout = score
+            score = finalScore
+        };
+
+        string json = JsonUtility.ToJson(body);
+        var request = new UnityWebRequest(url, "POST");
+        byte[] data = Encoding.UTF8.GetBytes(json);
+
+        request.uploadHandler = new UploadHandlerRaw(data);
+        request.downloadHandler = new DownloadHandlerBuffer();
+
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        if (!string.IsNullOrEmpty(SessionData.BearerToken))
+            request.SetRequestHeader("Authorization", "Bearer " + SessionData.BearerToken);
+
+        request.timeout = 10;
+
+        yield return request.SendWebRequest();
+
+
+        bool error = request.result != UnityWebRequest.Result.Success;
+
+        if (error)
+        {
+            Debug.LogError($"FinishGame Error: {request.error}\nResponse: {request.downloadHandler.text}");
+            yield break;
+        }
+
+        Debug.Log("FinishGame response: " + request.downloadHandler.text);
+    }
+
 }
+    [System.Serializable]
+    public class FinishRequest
+    {
+        public string game_token;
+        public string outcome;
+        public float payout;
+        public int score;
+    }
