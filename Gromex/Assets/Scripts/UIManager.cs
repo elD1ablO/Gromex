@@ -15,6 +15,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _startLivesGameButton;
     [SerializeField] private Button _startTimeGameButton;
 
+    [Header("Token Used State")]
+    [SerializeField] private TMP_Text _tokenUsedText;
+
     [Header("Timer (for time mode)")]
     [SerializeField] private TMP_Text _timerText;
     [SerializeField] private float _timeRemaining = 60f;
@@ -46,6 +49,7 @@ public class UIManager : MonoBehaviour
 
         // ensure UI initial visibility
         ShowTimer(false);
+        ShowTokenUsedMessage(false);
     }
 
     private void BestScoreUpdate()
@@ -71,7 +75,6 @@ public class UIManager : MonoBehaviour
         if (_playerController != null)
             _playerController.PlayerPosition(initialPlayerPosition);
 
-        // call GameManager to start lives mode
         _gameManager?.StartLivesGame();
     }
 
@@ -82,17 +85,14 @@ public class UIManager : MonoBehaviour
         if (_playerController != null)
             _playerController.PlayerPosition(initialPlayerPosition);
 
-        // call GameManager to start time mode with configured time
         _gameManager?.StartTimeGame(_timeRemaining);
     }
 
-    // Called by GameManager every frame when time-mode runs
     public void UpdateTimerDisplay(float timeLeft)
     {
         if (_timerText == null)
             return;
 
-        // format mm:ss or s
         int minutes = Mathf.FloorToInt(timeLeft / 60f);
         int seconds = Mathf.FloorToInt(timeLeft % 60f);
 
@@ -102,35 +102,25 @@ public class UIManager : MonoBehaviour
             _timerText.text = $"{seconds:00}";
     }
 
-    // UI helpers called by GameManager when switching modes
     public void EnterTimeMode(float timeSeconds)
     {
-        // hide lives UI
         ShowLives(false);
-
-        // show timer and set initial value
         ShowTimer(true);
         UpdateTimerDisplay(timeSeconds);
 
-        // ensure score shown
         if (_scoreText != null)
             _scoreText.text = "0";
     }
 
     public void EnterLivesMode()
     {
-        // show lives UI
         ShowLives(true);
-
-        // hide timer
         ShowTimer(false);
 
-        // ensure score shown
         if (_scoreText != null)
             _scoreText.text = "0";
     }
 
-    // General UI update for score and lives (GameManager calls this)
     public void UIUpdate(int currentScore, int currentLives)
     {
         if (_scoreText != null)
@@ -138,7 +128,6 @@ public class UIManager : MonoBehaviour
 
         if (_livesContainer != null && _lifePrefab != null)
         {
-            // Clear previous
             foreach (Transform child in _livesContainer.transform)
             {
                 Destroy(child.gameObject);
@@ -151,36 +140,66 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void GoToMenu()
+    /// <summary>
+    /// Called when game ends and token was used - hides start buttons
+    /// </summary>
+    public void GoToMenuTokenUsed()
     {
-        // stop spawner (defensive)
         _coinSpawner?.StopCoinSpawning();
 
-        // show start screen
         _startScreen.SetActive(true);
 
-        // reset UI: show lives by default and hide timer
-        EnterLivesMode();
+        // hide start buttons since token is used
+        SetStartButtonsVisible(false);
 
-        // update best score
+        // show message that token was used
+        ShowTokenUsedMessage(true);
+
+        EnterLivesMode();
         BestScoreUpdate();
+    }
+
+    /// <summary>
+    /// Standard menu return (token still valid or for other cases)
+    /// </summary>
+    public void GoToMenu()
+    {
+        _coinSpawner?.StopCoinSpawning();
+
+        _startScreen.SetActive(true);
+
+        // show start buttons
+        SetStartButtonsVisible(true);
+        ShowTokenUsedMessage(false);
+
+        EnterLivesMode();
+        BestScoreUpdate();
+    }
+
+    private void SetStartButtonsVisible(bool visible)
+    {
+        if (_startLivesGameButton != null)
+            _startLivesGameButton.gameObject.SetActive(visible);
+
+        if (_startTimeGameButton != null)
+            _startTimeGameButton.gameObject.SetActive(visible);
+    }
+
+    private void ShowTokenUsedMessage(bool show)
+    {
+        if (_tokenUsedText != null)
+            _tokenUsedText.gameObject.SetActive(show);
     }
 
     private void ShowLives(bool show)
     {
         if (_livesContainer != null)
-        {
             _livesContainer.SetActive(show);
-        }
     }
 
     private void ShowTimer(bool show)
     {
         if (_timerText != null)
-        {
             _timerText.gameObject.SetActive(show);
-        }
     }
 }
-
-
