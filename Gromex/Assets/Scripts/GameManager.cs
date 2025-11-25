@@ -128,8 +128,11 @@ public class GameManager : MonoBehaviour
     {
         _isGameRunning = false;
 
+        // Stop spawning and immediately clear all existing coins
         _coinSpawner?.StopCoinSpawning();
+        _coinSpawner?.ClearAllCoins();
 
+        // Update best score
         if (_currentScore > _bestScore)
         {
             _bestScore = _currentScore;
@@ -137,39 +140,46 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.Save();
         }
 
-        // send finish request and mark token as used
+        // SAFETY: if we are playing without a ticket, just go to menu and show score
+        if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
+        {
+            Debug.Log("<color=yellow>Offline mode – no ticket, returning to menu without server call.</color>");
+
+            // Show standard menu with start buttons (local play)
+            _uiManager?.GoToMenu();
+
+            ResetGameState();
+            return;
+        }
+
+        // Online mode: send finish request to server and then go to menu with token-used state
         StartCoroutine(SendFinishRequestAndReturnToMenu(_currentScore));
     }
 
     private IEnumerator SendFinishRequestAndReturnToMenu(int finalScore)
     {
-        // send finish request first
+        // Send finish request first
         yield return StartCoroutine(SendFinishRequest(finalScore));
 
-        // mark token as used
+        // Mark token as used
         _tokenUsed = true;
 
-        // clear session data since token is now used
+        // Clear session data since token is now used
         SessionData.TicketId = 0;
         SessionData.GameToken = "";
 
-        // return to menu with buttons hidden
+        // Return to menu with buttons hidden (token used)
         _uiManager?.GoToMenuTokenUsed();
 
-        // reset game state
-        _currentLives = _maxLives;
-        _currentScore = 0;
-        _isTimeMode = false;
-        _timeLeft = 0f;
+        // Reset game state
+        ResetGameState();
     }
 
     private IEnumerator SendFinishRequest(int finalScore)
     {
+        // Extra guard: if no ticket or token, do nothing
         if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
-        {
-            Debug.LogError("FinishGame: Missing session data.");
             yield break;
-        }
 
         string url = $"https://uni.gromex.io/28fk2/api/game/ticket/{SessionData.TicketId}/finish";
 
@@ -208,8 +218,16 @@ public class GameManager : MonoBehaviour
         Debug.Log("FinishGame response: " + request.downloadHandler.text);
     }
 
+    private void ResetGameState()
+    {
+        _currentLives = _maxLives;
+        _currentScore = 0;
+        _isTimeMode = false;
+        _timeLeft = 0f;
+    }
+
     /// <summary>
-    /// Called when a new token is validated - resets the token used state
+    /// Called when a new token is validated - resets the token used state.
     /// </summary>
     public void OnNewTokenValidated()
     {

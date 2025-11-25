@@ -33,7 +33,7 @@ public class UIManager : MonoBehaviour
     [Header("Countdown Canvas (activated at game start)")]
     [SerializeField] private GameObject _countdownCanvas;
 
-    [Header("Player turn buttons container (will be enabled after countdown)")]
+    [Header("Player turn buttons container (kept active even during countdown)")]
     [SerializeField] private GameObject _playerTurnButtonsContainer;
 
     private Countdown _countdown;
@@ -55,9 +55,8 @@ public class UIManager : MonoBehaviour
             _countdownCanvas.SetActive(false);
         }
 
-        // Ensure player turn buttons are initially hidden
-        if (_playerTurnButtonsContainer != null)
-            _playerTurnButtonsContainer.SetActive(false);
+        // Important: we DO NOT hide player turn buttons here anymore.
+        // They can stay active and usable even during countdown.
 
         if (_startLivesGameButton != null)
             _startLivesGameButton.onClick.AddListener(OnStartLivesButton);
@@ -95,20 +94,23 @@ public class UIManager : MonoBehaviour
         if (_playerController != null)
             _playerController.PlayerPosition(initialPlayerPosition);
 
+        // Show player turn buttons immediately and keep them active during countdown
+        if (_playerTurnButtonsContainer != null)
+            _playerTurnButtonsContainer.SetActive(true);
+
+        // Spawn one static (non-moving) coin for countdown preview
+        _coinSpawner?.SpawnPreviewCoin();
+
         // Activate countdown canvas and start countdown — when finished, start the actual game
         if (_countdownCanvas != null && _countdown != null)
         {
             _countdownCanvas.SetActive(true);
             _countdown.StartCountdown(() =>
             {
-                // start lives game in GameManager
+                // start lives game in GameManager (this will also start normal coin spawning and release preview coin)
                 _gameManager?.StartLivesGame();
 
-                // enable player rotation buttons (so player can play)
-                if (_playerTurnButtonsContainer != null)
-                    _playerTurnButtonsContainer.SetActive(true);
-
-                // hide countdown canvas (Countdown also deactivates it, but double ensure)
+                // hide countdown canvas
                 _countdownCanvas.SetActive(false);
             });
         }
@@ -116,8 +118,6 @@ public class UIManager : MonoBehaviour
         {
             // fallback — if no countdown configured, start immediately
             _gameManager?.StartLivesGame();
-            if (_playerTurnButtonsContainer != null)
-                _playerTurnButtonsContainer.SetActive(true);
         }
     }
 
@@ -128,6 +128,13 @@ public class UIManager : MonoBehaviour
         if (_playerController != null)
             _playerController.PlayerPosition(initialPlayerPosition);
 
+        // Show player turn buttons immediately
+        if (_playerTurnButtonsContainer != null)
+            _playerTurnButtonsContainer.SetActive(true);
+
+        // Spawn one static (non-moving) coin for countdown preview
+        _coinSpawner?.SpawnPreviewCoin();
+
         if (_countdownCanvas != null && _countdown != null)
         {
             _countdownCanvas.SetActive(true);
@@ -136,10 +143,7 @@ public class UIManager : MonoBehaviour
                 // start time game in GameManager
                 _gameManager?.StartTimeGame(_timeRemaining);
 
-                // enable player rotation buttons
-                if (_playerTurnButtonsContainer != null)
-                    _playerTurnButtonsContainer.SetActive(true);
-
+                // hide countdown canvas
                 _countdownCanvas.SetActive(false);
             });
         }
@@ -147,8 +151,6 @@ public class UIManager : MonoBehaviour
         {
             // fallback
             _gameManager?.StartTimeGame(_timeRemaining);
-            if (_playerTurnButtonsContainer != null)
-                _playerTurnButtonsContainer.SetActive(true);
         }
     }
 

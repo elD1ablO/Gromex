@@ -4152,6 +4152,8 @@ MonoBehaviour:
   - {fileID: 501014432}
   - {fileID: 1021130321}
   _coinPrefab: {fileID: 5666834085042865330, guid: 531615bd327b8634489f4a92841ee6e0, type: 3}
+  _failCoinPrefab: {fileID: 5666834085042865330, guid: 014e3d9acce2e3147924637b83006dbf, type: 3}
+  _failCoinChance: 0.2
   _initialCoinSpeed: 1
   _initialSpawnInterval: 2
   _spawnIntervalSpeedUp: 0.3
@@ -4987,6 +4989,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 92149660062512230, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
+      propertyPath: m_TagString
+      value: PlayerCatch
+      objectReference: {fileID: 0}
     - target: {fileID: 339591192913320526, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.7
@@ -4998,6 +5004,10 @@ PrefabInstance:
     - target: {fileID: 748587822870681400, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 795327515336253504, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
+      propertyPath: m_TagString
+      value: PlayerCatch
       objectReference: {fileID: 0}
     - target: {fileID: 919116356946585439, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
       propertyPath: m_LocalScale.x
@@ -5083,6 +5093,10 @@ PrefabInstance:
       propertyPath: m_Offset.x
       value: -0.3664777
       objectReference: {fileID: 0}
+    - target: {fileID: 3050177274628664495, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
+      propertyPath: m_TagString
+      value: PlayerCatch
+      objectReference: {fileID: 0}
     - target: {fileID: 4203817732799117084, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
       propertyPath: m_Size.x
       value: 1.5
@@ -5166,6 +5180,10 @@ PrefabInstance:
     - target: {fileID: 6450015092943939531, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
       propertyPath: m_Offset.y
       value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7091406516600064669, guid: ba28754817cc8d24a9f5cc23034ebc38, type: 3}
+      propertyPath: m_TagString
+      value: PlayerCatch
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

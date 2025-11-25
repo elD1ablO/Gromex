@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem; // New Input System
 
 public class PlayerController : MonoBehaviour
 {
@@ -13,13 +14,48 @@ public class PlayerController : MonoBehaviour
 
     [Header("Catch colliders (1-4)")]
     [SerializeField] private BoxCollider2D[] _catchColliders;
-    // поряд: 1,2,3,4 як позиції
+    // order: 1,2,3,4 as positions
 
     private int _currentPosition = 1;
 
     private void Start()
     {
         UpdateVisualsAndColliders();
+    }
+
+    private void Update()
+    {
+        bool flowControl = UseKeyboardControls();
+        if (!flowControl)
+        {
+            return;
+        }
+    }
+
+    private bool UseKeyboardControls()
+    {
+        var kb = Keyboard.current;
+        if (kb == null)
+            return false;
+
+        if (kb.qKey.wasPressedThisFrame)
+        {
+            PlayerPosition(1);
+        }
+        else if (kb.pKey.wasPressedThisFrame)
+        {
+            PlayerPosition(2);
+        }
+        else if (kb.aKey.wasPressedThisFrame)
+        {
+            PlayerPosition(3);
+        }
+        else if (kb.lKey.wasPressedThisFrame)
+        {
+            PlayerPosition(4);
+        }
+
+        return true;
     }
 
     public void PlayerPosition(int pos)
@@ -69,4 +105,3 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
-

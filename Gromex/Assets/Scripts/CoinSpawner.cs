@@ -1,35 +1,35 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CoinSpawner : MonoBehaviour
 {
     [SerializeField] private Transform[] _spawnTransforms;
     [SerializeField] private GameObject _coinPrefab;
+    [SerializeField] private GameObject _failCoinPrefab;
+
+    [Header("Fail coin chance (0..1)")]
+    [SerializeField] private float _failCoinChance = 0.2f;
 
     [Header("Initial values")]
-    [Tooltip("Initial gravity scale for coins")]
-    [SerializeField] private float _initialCoinSpeed = 1f; // used as gravityScale
-
-    [Tooltip("Initial time between spawns")]
+    [SerializeField] private float _initialCoinSpeed = 1f;
     [SerializeField] private float _initialSpawnInterval = 2f;
 
     [Header("Speed up settings")]
-    [Tooltip("How much faster (interval smaller) every threshold")]
     [SerializeField] private float _spawnIntervalSpeedUp = 0.1f;
-
-    [Tooltip("How much gravityScale grows every threshold")]
     [SerializeField] private float _coinSpeedUp = 0.2f;
-
-    [Tooltip("Every N seconds difficulty increases")]
     [SerializeField] private float _speedUpTreshold = 30f;
 
-    // runtime values
     private float _currentSpawnInterval;
-    private float _currentCoinSpeed;   // used as current gravityScale
+    private float _currentCoinSpeed;
 
     private float _spawnTimer;
     private float _speedUpTimer;
 
     private bool _isSpawning;
+
+    private readonly List<GameObject> _spawnedCoins = new List<GameObject>();
+    private readonly List<GameObject> _spawnedFailCoins = new List<GameObject>();
+
     private void Start()
     {
         _currentSpawnInterval = _initialSpawnInterval;
@@ -38,27 +38,22 @@ public class CoinSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (!_isSpawning || _spawnTransforms == null || _spawnTransforms.Length == 0 || _coinPrefab == null)
+        if (!_isSpawning || _spawnTransforms == null || _spawnTransforms.Length == 0)
             return;
 
-        // spawn timer
         _spawnTimer += Time.deltaTime;
         if (_spawnTimer >= _currentSpawnInterval)
         {
             _spawnTimer = 0f;
-            SpawnCoin();
+            SpawnRandomCoin();
         }
 
-        // difficulty / speed-up timer
         _speedUpTimer += Time.deltaTime;
         if (_speedUpTimer >= _speedUpTreshold)
         {
             _speedUpTimer = 0f;
 
-            // spawn more often (interval smaller, but not below some minimum)
             _currentSpawnInterval = Mathf.Max(0.2f, _currentSpawnInterval - _spawnIntervalSpeedUp);
-
-            // increase gravityScale for newly spawned coins
             _currentCoinSpeed += _coinSpeedUp;
         }
     }
@@ -71,6 +66,8 @@ public class CoinSpawner : MonoBehaviour
 
         _currentSpawnInterval = _initialSpawnInterval;
         _currentCoinSpeed = _initialCoinSpeed;
+
+        ReleaseStaticCoins();
     }
 
     public void StopCoinSpawning()
@@ -78,20 +75,102 @@ public class CoinSpawner : MonoBehaviour
         _isSpawning = false;
     }
 
+    private void SpawnRandomCoin()
+    {
+        float r = Random.value;
+
+        if (r <= _failCoinChance && _failCoinPrefab != null)
+            SpawnFailCoin();
+        else
+            SpawnCoin();
+    }
+
     private void SpawnCoin()
     {
-        Transform spawnPoint = _spawnTransforms[Random.Range(0, _spawnTransforms.Length)];
-        GameObject coin = Instantiate(_coinPrefab, spawnPoint.position, spawnPoint.rotation);
+        Transform spawn = _spawnTransforms[Random.Range(0, _spawnTransforms.Length)];
+        GameObject coin = Instantiate(_coinPrefab, spawn.position, spawn.rotation);
+        _spawnedCoins.Add(coin);
+
+        SetCoinPhysics(coin);
+    }
+
+    private void SpawnFailCoin()
+    {
+        if (_failCoinPrefab == null)
+        {
+            SpawnCoin();
+            return;
+        }
+
+        Transform spawn = _spawnTransforms[Random.Range(0, _spawnTransforms.Length)];
+        GameObject coin = Instantiate(_failCoinPrefab, spawn.position, spawn.rotation);
+
+        _spawnedFailCoins.Add(coin);
+
+        SetCoinPhysics(coin);
+
+        // fail-coin gets FailCoin component
+        if (coin.GetComponent<FailCoin>() == null)
+            coin.AddComponent<FailCoin>();
+    }
+
+    private void SetCoinPhysics(GameObject coin)
+    {
+        Rigidbody2D rb = coin.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+            rb.gravityScale = _currentCoinSpeed;
+        }
+    }
+
+    public void SpawnPreviewCoin()
+    {
+        Transform spawn = _spawnTransforms[Random.Range(0, _spawnTransforms.Length)];
+        GameObject coin = Instantiate(_coinPrefab, spawn.position, spawn.rotation);
+
+        _spawnedCoins.Add(coin);
 
         Rigidbody2D rb = coin.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // reset any previous motion (if prefab had some)
+            rb.simulated = false;
+            rb.gravityScale = 0;
             rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-
-            // let gravity + slope do all the work
-            rb.gravityScale = _currentCoinSpeed;
         }
+    }
+
+    private void ReleaseStaticCoins()
+    {
+        foreach (var c in _spawnedCoins)
+        {
+            if (c == null)
+                continue;
+            Rigidbody2D rb = c.GetComponent<Rigidbody2D>();
+            if (rb == null)
+                continue;
+
+            if (!rb.simulated || Mathf.Approximately(rb.gravityScale, 0))
+            {
+                rb.simulated = true;
+                rb.gravityScale = _currentCoinSpeed;
+            }
+        }
+    }
+
+    public void ClearAllCoins()
+    {
+        for (int i = _spawnedCoins.Count - 1; i >= 0; i--)
+            if (_spawnedCoins[i] != null)
+                Destroy(_spawnedCoins[i]);
+
+        for (int i = _spawnedFailCoins.Count - 1; i >= 0; i--)
+            if (_spawnedFailCoins[i] != null)
+                Destroy(_spawnedFailCoins[i]);
+
+        _spawnedCoins.Clear();
+        _spawnedFailCoins.Clear();
     }
 }
