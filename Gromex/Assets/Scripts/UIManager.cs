@@ -42,13 +42,16 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _quitButton;
 
-    private Coroutine _minusTimerRoutine;
     private Countdown _countdown;
     private PlayerController _playerController;
     private CoinSpawner _coinSpawner;
     private GameManager _gameManager;
 
     private bool _isPaused = false;
+
+    // minus-timer FX
+    private Coroutine _minusTimerRoutine;
+    private Vector3 _minusTimerBaseScale = Vector3.one;
 
     private void Awake()
     {
@@ -89,6 +92,13 @@ public class UIManager : MonoBehaviour
         // make sure in-game menu is hidden at start
         if (_inGameMenu != null)
             _inGameMenu.SetActive(false);
+
+        // init minus timer visual state
+        if (_minusTimerText != null)
+        {
+            _minusTimerBaseScale = _minusTimerText.rectTransform.localScale;
+            _minusTimerText.gameObject.SetActive(false);
+        }
     }
 
     private void BestScoreUpdate()
@@ -222,12 +232,12 @@ public class UIManager : MonoBehaviour
         {
             foreach (Transform child in _livesContainer.transform)
             {
-                Destroy(child.gameObject);
+                Object.Destroy(child.gameObject);
             }
 
             for (int i = 0; i < currentLives; i++)
             {
-                Instantiate(_lifePrefab, _livesContainer.transform);
+                Object.Instantiate(_lifePrefab, _livesContainer.transform);
             }
         }
     }
@@ -302,6 +312,88 @@ public class UIManager : MonoBehaviour
     }
 
     // ==========================
+    //   MINUS TIMER FX (-5s)
+    // ==========================
+
+    /// <summary>
+    /// Plays a punch-scale + fade-out effect for the "-time" text.
+    /// </summary>
+    public void PlayMinusTimeEffect()
+    {
+        if (_minusTimerText == null)
+            return;
+
+        if (_minusTimerRoutine != null)
+            StopCoroutine(_minusTimerRoutine);
+
+        _minusTimerRoutine = StartCoroutine(MinusTimeRoutine());
+    }
+
+    private IEnumerator MinusTimeRoutine()
+    {
+        RectTransform rt = _minusTimerText.rectTransform;
+
+        // Start state
+        _minusTimerText.gameObject.SetActive(true);
+
+        // reset alpha to 1
+        Color c = _minusTimerText.color;
+        c.a = 1f;
+        _minusTimerText.color = c;
+
+        // punch scale parameters
+        float punchScale = 1.5f;
+        float punchDuration = 0.15f;
+        float holdDuration = 1.0f;
+        float fadeDuration = 0.5f;
+
+        Vector3 startScale = _minusTimerBaseScale * punchScale;
+        Vector3 endScale = _minusTimerBaseScale;
+
+        rt.localScale = startScale;
+
+        // punch: scale from bigger back to normal
+        float t = 0f;
+        while (t < punchDuration)
+        {
+            t += Time.deltaTime;
+            float lerp = Mathf.Clamp01(t / punchDuration);
+            // easing: a bit smoother than linear
+            float eased = 1f - Mathf.Pow(1f - lerp, 2f);
+            rt.localScale = Vector3.Lerp(startScale, endScale, eased);
+            yield return null;
+        }
+
+        rt.localScale = endScale;
+
+        // hold fully visible
+        yield return new WaitForSeconds(holdDuration);
+
+        // fade out
+        t = 0f;
+        while (t < fadeDuration)
+        {
+            t += Time.deltaTime;
+            float lerp = Mathf.Clamp01(t / fadeDuration);
+            float alpha = Mathf.Lerp(1f, 0f, lerp);
+            Color cc = _minusTimerText.color;
+            cc.a = alpha;
+            _minusTimerText.color = cc;
+            yield return null;
+        }
+
+        // hide and reset alpha/scale for next time
+        _minusTimerText.gameObject.SetActive(false);
+
+        Color final = _minusTimerText.color;
+        final.a = 1f;
+        _minusTimerText.color = final;
+        rt.localScale = _minusTimerBaseScale;
+
+        _minusTimerRoutine = null;
+    }
+
+    // ==========================
     //      PAUSE / RESUME
     // ==========================
 
@@ -355,50 +447,5 @@ public class UIManager : MonoBehaviour
 
         // Properly end game session
         _gameManager?.EndGameSession();
-    }
-
-    public void PlayMinusTimeEffect()
-    {
-        if (_minusTimerText == null)
-            return;
-
-        // Stop previous animation if it's still running
-        if (_minusTimerRoutine != null)
-            StopCoroutine(_minusTimerRoutine);
-
-        _minusTimerRoutine = StartCoroutine(MinusTimeRoutine());
-    }
-
-    private IEnumerator MinusTimeRoutine()
-    {
-        // Ensure active
-        _minusTimerText.gameObject.SetActive(true);
-
-        // Start fully visible
-        Color c = _minusTimerText.color;
-        c.a = 1f;
-        _minusTimerText.color = c;
-
-        // Stay visible for 1 sec
-        yield return new WaitForSeconds(1f);
-
-        // Fade out over 0.5 sec
-        float fadeTime = 0.5f;
-        float t = 0f;
-
-        while (t < fadeTime)
-        {
-            t += Time.deltaTime;
-            float alpha = Mathf.Lerp(1f, 0f, t / fadeTime);
-
-            Color cc = _minusTimerText.color;
-            cc.a = alpha;
-            _minusTimerText.color = cc;
-
-            yield return null;
-        }
-
-        // Hide again
-        _minusTimerText.gameObject.SetActive(false);
     }
 }
