@@ -8,8 +8,10 @@ public class PlayerController : MonoBehaviour
     public static Action OnFailCatch;
 
     [Header("Player sprites")]
-    [SerializeField] private Sprite _bottomPlayerSprite;
-    [SerializeField] private Sprite _topPlayerSprite;
+    [SerializeField] private Sprite _topLeftPlayerSprite;
+    [SerializeField] private Sprite _topRightPlayerSprite;
+    [SerializeField] private Sprite _bottomLeftPlayerSprite;
+    [SerializeField] private Sprite _bottomRightPlayerSprite;
     [SerializeField] private SpriteRenderer _playerImage;
 
     [Header("Catch colliders (1-4)")]
@@ -72,23 +74,23 @@ public class PlayerController : MonoBehaviour
         switch (_currentPosition)
         {
             case 1:
-                _playerImage.sprite = _topPlayerSprite;
-                _playerImage.flipX = false;
+                _playerImage.sprite = _topLeftPlayerSprite;
+                
                 break;
 
             case 2:
-                _playerImage.sprite = _topPlayerSprite;
-                _playerImage.flipX = true;
+                _playerImage.sprite = _topRightPlayerSprite;
+                
                 break;
 
             case 3:
-                _playerImage.sprite = _bottomPlayerSprite;
-                _playerImage.flipX = false;
+                _playerImage.sprite = _bottomLeftPlayerSprite;
+                
                 break;
 
             case 4:
-                _playerImage.sprite = _bottomPlayerSprite;
-                _playerImage.flipX = true;
+                _playerImage.sprite = _bottomRightPlayerSprite;
+                
                 break;
         }
 
