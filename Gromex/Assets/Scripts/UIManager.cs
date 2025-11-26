@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Timer (for time mode)")]
     [SerializeField] private TMP_Text _timerText;
+    [SerializeField] private TMP_Text _minusTimerText;
     [SerializeField] private float _timeRemaining = 60f;
 
     [Header("Player / Lives")]
@@ -40,6 +42,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _quitButton;
 
+    private Coroutine _minusTimerRoutine;
     private Countdown _countdown;
     private PlayerController _playerController;
     private CoinSpawner _coinSpawner;
@@ -352,5 +355,50 @@ public class UIManager : MonoBehaviour
 
         // Properly end game session
         _gameManager?.EndGameSession();
+    }
+
+    public void PlayMinusTimeEffect()
+    {
+        if (_minusTimerText == null)
+            return;
+
+        // Stop previous animation if it's still running
+        if (_minusTimerRoutine != null)
+            StopCoroutine(_minusTimerRoutine);
+
+        _minusTimerRoutine = StartCoroutine(MinusTimeRoutine());
+    }
+
+    private IEnumerator MinusTimeRoutine()
+    {
+        // Ensure active
+        _minusTimerText.gameObject.SetActive(true);
+
+        // Start fully visible
+        Color c = _minusTimerText.color;
+        c.a = 1f;
+        _minusTimerText.color = c;
+
+        // Stay visible for 1 sec
+        yield return new WaitForSeconds(1f);
+
+        // Fade out over 0.5 sec
+        float fadeTime = 0.5f;
+        float t = 0f;
+
+        while (t < fadeTime)
+        {
+            t += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, t / fadeTime);
+
+            Color cc = _minusTimerText.color;
+            cc.a = alpha;
+            _minusTimerText.color = cc;
+
+            yield return null;
+        }
+
+        // Hide again
+        _minusTimerText.gameObject.SetActive(false);
     }
 }

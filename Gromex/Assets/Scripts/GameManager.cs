@@ -113,23 +113,15 @@ public class GameManager : MonoBehaviour
 
     private void HandleFailCatch()
     {
-        // Fail events are raised ONLY in these cases:
-        // - Lives mode:
-        //      * normal coin MISSED
-        //      * fail coin CAUGHT
-        // - Time mode:
-        //      * fail coin CAUGHT
-        //
-        // That mapping is controlled in CatchZone / FailZone.
-
         if (_isTimeMode)
         {
-            // Time mode: fail = -5 seconds, no lives used.
             _timeLeft -= 5f;
             if (_timeLeft < 0f)
                 _timeLeft = 0f;
 
             _uiManager?.UpdateTimerDisplay(_timeLeft);
+
+            _uiManager?.PlayMinusTimeEffect();
 
             if (_timeLeft <= 0f)
                 EndGameSession();
@@ -137,11 +129,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Lives mode: fail = -1 life.
+        // LIVES MODE
         _currentLives--;
-
-        if (_uiManager != null)
-            _uiManager.UIUpdate(_currentScore, _currentLives);
+        _uiManager?.UIUpdate(_currentScore, _currentLives);
 
         if (_currentLives <= 0)
             EndGameSession();
