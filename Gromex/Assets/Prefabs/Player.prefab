@@ -173,16 +173,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f82630218ea9145a2c8cd7dce030ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  _idlePlayerSprite: {fileID: 21300000, guid: 0132ccd298a0448b98f8a3f24e7da9aa, type: 3}
   _topLeftPlayerSprite: {fileID: 21300000, guid: 0035c8bb070e5b74391e707b5e43ee38, type: 3}
-  _topRightPlayerSprite: {fileID: 21300000, guid: 4f19c050535b3774eaa9a2480d56e66b, type: 3}
-  _bottomLeftPlayerSprite: {fileID: 4638151603590069075, guid: e7f2d4f4217fe4562a388dea5ec4b125, type: 3}
-  _bottomRightPlayerSprite: {fileID: 7280074341342124571, guid: 7ff213f12eee64017a8faa6f8db9b6bb, type: 3}
+  _topRightPlayerSprite: {fileID: 21300000, guid: e7f2d4f4217fe4562a388dea5ec4b125, type: 3}
+  _bottomLeftPlayerSprite: {fileID: 21300000, guid: 4f19c050535b3774eaa9a2480d56e66b, type: 3}
+  _bottomRightPlayerSprite: {fileID: 21300000, guid: 7ff213f12eee64017a8faa6f8db9b6bb, type: 3}
   _playerImage: {fileID: 5084035057668285167}
   _catchColliders:
   - {fileID: 6311851907037183309}
   - {fileID: 4203817732799117084}
   - {fileID: 5353848032686206233}
   - {fileID: 3012928642810066854}
+  _positionButtons:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _keyboardPressFlashDuration: 0.12
 --- !u!1 &784654256346527268
 GameObject:
   m_ObjectHideFlags: 0

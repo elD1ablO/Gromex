@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +23,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private float _timeRemaining = 60f;
 
     [Header("Player / Lives")]
-    [SerializeField] private int initialPlayerPosition = 1;
     [SerializeField] private int _initialLives = 3;
 
     [SerializeField] private GameObject _livesContainer;
@@ -36,10 +34,18 @@ public class UIManager : MonoBehaviour
     [Header("Player turn buttons container (kept active even during countdown)")]
     [SerializeField] private GameObject _playerTurnButtonsContainer;
 
+    [Header("In-game menu elements")]
+    [SerializeField] private Button _menuButton;
+    [SerializeField] private GameObject _inGameMenu;
+    [SerializeField] private Button _resumeButton;
+    [SerializeField] private Button _quitButton;
+
     private Countdown _countdown;
     private PlayerController _playerController;
     private CoinSpawner _coinSpawner;
     private GameManager _gameManager;
+
+    private bool _isPaused = false;
 
     private void Awake()
     {
@@ -55,20 +61,31 @@ public class UIManager : MonoBehaviour
             _countdownCanvas.SetActive(false);
         }
 
-        // Important: we DO NOT hide player turn buttons here anymore.
-        // They can stay active and usable even during countdown.
-
         if (_startLivesGameButton != null)
             _startLivesGameButton.onClick.AddListener(OnStartLivesButton);
 
         if (_startTimeGameButton != null)
             _startTimeGameButton.onClick.AddListener(OnStartTimeButton);
 
+        // In-game menu buttons
+        if (_menuButton != null)
+            _menuButton.onClick.AddListener(OpenPauseMenu);
+
+        if (_resumeButton != null)
+            _resumeButton.onClick.AddListener(ResumeGame);
+
+        if (_quitButton != null)
+            _quitButton.onClick.AddListener(QuitGame);
+
         BestScoreUpdate();
 
         // ensure UI initial visibility
         ShowTimer(false);
         ShowTokenUsedMessage(false);
+
+        // make sure in-game menu is hidden at start
+        if (_inGameMenu != null)
+            _inGameMenu.SetActive(false);
     }
 
     private void BestScoreUpdate()
@@ -91,8 +108,7 @@ public class UIManager : MonoBehaviour
     {
         _startScreen.SetActive(false);
 
-        if (_playerController != null)
-            _playerController.PlayerPosition(initialPlayerPosition);
+        // Player stays in idle until user chooses a position (keyboard / UI button)
 
         // Show player turn buttons immediately and keep them active during countdown
         if (_playerTurnButtonsContainer != null)
@@ -125,8 +141,12 @@ public class UIManager : MonoBehaviour
     {
         _startScreen.SetActive(false);
 
-        if (_playerController != null)
-            _playerController.PlayerPosition(initialPlayerPosition);
+        // Player stays in idle until user chooses a position (keyboard / UI button)
+
+        // Immediately switch UI to time-mode layout:
+        // - hide lives
+        // - show timer with full time value
+        EnterTimeMode(_timeRemaining);
 
         // Show player turn buttons immediately
         if (_playerTurnButtonsContainer != null)
@@ -140,7 +160,7 @@ public class UIManager : MonoBehaviour
             _countdownCanvas.SetActive(true);
             _countdown.StartCountdown(() =>
             {
-                // start time game in GameManager
+                // start time game in GameManager (this will actually start time ticking)
                 _gameManager?.StartTimeGame(_timeRemaining);
 
                 // hide countdown canvas
@@ -170,7 +190,10 @@ public class UIManager : MonoBehaviour
 
     public void EnterTimeMode(float timeSeconds)
     {
+        // Lives are not needed in time mode
         ShowLives(false);
+
+        // Timer should be visible in time mode
         ShowTimer(true);
         UpdateTimerDisplay(timeSeconds);
 
@@ -223,6 +246,9 @@ public class UIManager : MonoBehaviour
 
         EnterLivesMode();
         BestScoreUpdate();
+
+        // Reset player visuals back to idle in menu
+        _playerController?.ResetToIdle();
     }
 
     /// <summary>
@@ -240,6 +266,9 @@ public class UIManager : MonoBehaviour
 
         EnterLivesMode();
         BestScoreUpdate();
+
+        // Reset player visuals back to idle in menu
+        _playerController?.ResetToIdle();
     }
 
     private void SetStartButtonsVisible(bool visible)
@@ -267,5 +296,61 @@ public class UIManager : MonoBehaviour
     {
         if (_timerText != null)
             _timerText.gameObject.SetActive(show);
+    }
+
+    // ==========================
+    //      PAUSE / RESUME
+    // ==========================
+
+    private void OpenPauseMenu()
+    {
+        if (_isPaused)
+            return;
+
+        _isPaused = true;
+
+        // Freeze everything, including countdown
+        Time.timeScale = 0f;
+
+        // Stop spawning new coins (existing ones will be frozen by timeScale = 0)
+        _coinSpawner?.StopCoinSpawning();
+
+        if (_inGameMenu != null)
+            _inGameMenu.SetActive(true);
+    }
+
+    private void ResumeGame()
+    {
+        if (!_isPaused)
+            return;
+
+        _isPaused = false;
+
+        // Resume time
+        Time.timeScale = 1f;
+
+        // If game is running, resume spawning.
+        // If we are still on countdown screen, IsGameRunning == false
+        // and preview coin will stay static.
+        if (_gameManager != null && _gameManager.IsGameRunning)
+        {
+            _coinSpawner?.StartCoinSpawning();
+        }
+
+        if (_inGameMenu != null)
+            _inGameMenu.SetActive(false);
+    }
+
+    private void QuitGame()
+    {
+        // Restore time just in case
+        Time.timeScale = 1f;
+        _isPaused = false;
+
+        if (_inGameMenu != null)
+            _inGameMenu.SetActive(false);
+
+        // Properly end game session
+        _gameManager?.EndGameSession();
     }
 }

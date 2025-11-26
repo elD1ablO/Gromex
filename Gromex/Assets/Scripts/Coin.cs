@@ -2,46 +2,12 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    public enum CoinType
-    {
-        Normal,
-        Fail
-    }
+    [Header("Coin type")]
+    [Tooltip("If true, this is a fail (red) coin. Otherwise this is a normal coin.")]
+    [SerializeField] private bool _isFailCoin = false;
 
-    [SerializeField] private CoinType _type = CoinType.Normal;
-
-    public void HandleCaught()
-    {
-        switch (_type)
-        {
-            case CoinType.Normal:
-                // Normal coin caught: add score
-                PlayerController.OnCoinCatch?.Invoke();
-                break;
-
-            case CoinType.Fail:
-                // Fail coin caught: lose life
-                PlayerController.OnFailCatch?.Invoke();
-                break;
-        }
-
-        Destroy(gameObject);
-    }
-
-    public void HandleMissed()
-    {
-        switch (_type)
-        {
-            case CoinType.Normal:
-                // Normal coin missed: lose life
-                PlayerController.OnFailCatch?.Invoke();
-                break;
-
-            case CoinType.Fail:
-                // Fail coin missed: nothing happens
-                break;
-        }
-
-        Destroy(gameObject);
-    }
+    /// <summary>
+    /// True if this is a fail (red) coin.
+    /// </summary>
+    public bool IsFailCoin => _isFailCoin;
 }

@@ -104,6 +104,7 @@ public class GameManager : MonoBehaviour
 
     private void HandleCoinCatch()
     {
+        // Normal coin catch in both modes: always +1 score.
         _currentScore++;
 
         if (_uiManager != null)
@@ -112,9 +113,31 @@ public class GameManager : MonoBehaviour
 
     private void HandleFailCatch()
     {
-        if (_isTimeMode)
-            return;
+        // Fail events are raised ONLY in these cases:
+        // - Lives mode:
+        //      * normal coin MISSED
+        //      * fail coin CAUGHT
+        // - Time mode:
+        //      * fail coin CAUGHT
+        //
+        // That mapping is controlled in CatchZone / FailZone.
 
+        if (_isTimeMode)
+        {
+            // Time mode: fail = -5 seconds, no lives used.
+            _timeLeft -= 5f;
+            if (_timeLeft < 0f)
+                _timeLeft = 0f;
+
+            _uiManager?.UpdateTimerDisplay(_timeLeft);
+
+            if (_timeLeft <= 0f)
+                EndGameSession();
+
+            return;
+        }
+
+        // Lives mode: fail = -1 life.
         _currentLives--;
 
         if (_uiManager != null)
@@ -124,7 +147,7 @@ public class GameManager : MonoBehaviour
             EndGameSession();
     }
 
-    private void EndGameSession()
+    public void EndGameSession()
     {
         _isGameRunning = false;
 
@@ -145,7 +168,6 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("<color=yellow>Offline mode – no ticket, returning to menu without server call.</color>");
 
-            // Show standard menu with start buttons (local play)
             _uiManager?.GoToMenu();
 
             ResetGameState();
@@ -158,26 +180,20 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator SendFinishRequestAndReturnToMenu(int finalScore)
     {
-        // Send finish request first
         yield return StartCoroutine(SendFinishRequest(finalScore));
 
-        // Mark token as used
         _tokenUsed = true;
 
-        // Clear session data since token is now used
         SessionData.TicketId = 0;
         SessionData.GameToken = "";
 
-        // Return to menu with buttons hidden (token used)
         _uiManager?.GoToMenuTokenUsed();
 
-        // Reset game state
         ResetGameState();
     }
 
     private IEnumerator SendFinishRequest(int finalScore)
     {
-        // Extra guard: if no ticket or token, do nothing
         if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
             yield break;
 
@@ -234,6 +250,9 @@ public class GameManager : MonoBehaviour
         _tokenUsed = false;
     }
 
+    // Exposed for other systems (e.g., zones) to check current mode.
+    public bool IsTimeMode => _isTimeMode;
+    public bool IsGameRunning => _isGameRunning;
     public bool IsTokenUsed => _tokenUsed;
 }
 

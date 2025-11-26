@@ -109,9 +109,6 @@ public class CoinSpawner : MonoBehaviour
 
         SetCoinPhysics(coin);
 
-        // fail-coin gets FailCoin component
-        if (coin.GetComponent<FailCoin>() == null)
-            coin.AddComponent<FailCoin>();
     }
 
     private void SetCoinPhysics(GameObject coin)

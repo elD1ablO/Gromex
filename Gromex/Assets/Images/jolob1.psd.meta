@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 4215685f478b9fd4aaf010d82608a1f9
+guid: b4393a818c432ac40a1666f1af1ff901
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6144929353221624614
-    second: coin_bad_0
+      213: 6033722173144820788
+    second: jolob1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: coin_bad_0
+      name: jolob1_0
       rect:
         serializedVersion: 2
-        x: 79
-        y: 78
-        width: 866
-        height: 866
+        x: 514
+        y: 1583
+        width: 286
+        height: 287
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 62355a480bc274550800000000000000
-      internalID: 6144929353221624614
+      spriteID: 43ce1b339561cb350800000000000000
+      internalID: 6033722173144820788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: jolob1_1
+      rect:
+        serializedVersion: 2
+        x: 299
+        y: 385
+        width: 1327
+        height: 1126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b4d060a67cb5e464cb4ff780763d217c
+      internalID: -1577233117
       vertices: []
       indices: 
       edges: []
@@ -151,7 +173,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 939608bb162e69543b5873ed22abf722
     internalID: 0
     vertices: []
     indices: 
@@ -159,9 +181,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      coin_bad_0: 6144929353221624614
+      jolob1_0: 6033722173144820788
+      jolob1_1: -1577233117
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
