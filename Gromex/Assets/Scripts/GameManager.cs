@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Text;
 using UnityEngine;
@@ -13,6 +14,7 @@ public class GameManager : MonoBehaviour
     private UIManager _uiManager;
     private PlayerController _playerController;
     private CoinSpawner _coinSpawner;
+    private SupabaseLeaderboard _supabaseLeaderboard;
 
     private int _currentLives;
     private int _currentScore;
@@ -23,11 +25,16 @@ public class GameManager : MonoBehaviour
     private bool _isGameRunning = false;
     private bool _tokenUsed = false;
 
+    // Supabase session tracking
+    private DateTime _sessionStartTimeUtc;
+    private bool _hasSessionStartTime = false;
+
     private void Awake()
     {
         _uiManager = FindFirstObjectByType<UIManager>();
         _playerController = FindFirstObjectByType<PlayerController>();
         _coinSpawner = FindFirstObjectByType<CoinSpawner>();
+        _supabaseLeaderboard = FindFirstObjectByType<SupabaseLeaderboard>();
     }
 
     private void Start()
@@ -80,6 +87,10 @@ public class GameManager : MonoBehaviour
         _currentLives = _maxLives;
         _currentScore = 0;
 
+        // mark session start time for Supabase log
+        _sessionStartTimeUtc = DateTime.UtcNow;
+        _hasSessionStartTime = true;
+
         _coinSpawner?.StartCoinSpawning();
 
         _uiManager?.EnterLivesMode();
@@ -93,6 +104,10 @@ public class GameManager : MonoBehaviour
 
         _timeLeft = Mathf.Max(0f, timeSeconds);
         _currentScore = 0;
+
+        // mark session start time for Supabase log
+        _sessionStartTimeUtc = DateTime.UtcNow;
+        _hasSessionStartTime = true;
 
         _coinSpawner?.StartCoinSpawning();
 
@@ -152,6 +167,21 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.SetInt(BEST_SCORE_KEY, _bestScore);
             PlayerPrefs.Save();
         }
+
+        // --- Supabase log (always, even without ticket / token) ---
+        DateTime endTimeUtc = DateTime.UtcNow;
+        DateTime startTimeUtc = _hasSessionStartTime ? _sessionStartTimeUtc : endTimeUtc;
+
+        int? ticketIdNullable = (SessionData.TicketId > 0) ? SessionData.TicketId : (int?)null;
+
+        _supabaseLeaderboard?.LogGameSession(
+            startTimeUtc,
+            endTimeUtc,
+            _currentScore,
+            _isTimeMode,
+            ticketIdNullable
+        );
+        // ------------------------------------------------------------
 
         // SAFETY: if we are playing without a ticket, just go to menu and show score
         if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
@@ -230,6 +260,8 @@ public class GameManager : MonoBehaviour
         _currentScore = 0;
         _isTimeMode = false;
         _timeLeft = 0f;
+
+        _hasSessionStartTime = false;
     }
 
     /// <summary>
