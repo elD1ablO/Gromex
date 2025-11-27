@@ -2471,7 +2471,7 @@ VideoPlayer:
   m_DataSource: 1
   m_TimeUpdateMode: 2
   m_PlaybackSpeed: 1
-  m_AudioOutputMode: 2
+  m_AudioOutputMode: 0
   m_TargetAudioSources: []
   m_DirectAudioVolumes: []
   m_Url: 
@@ -2496,7 +2496,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e6d24599e6a8194ba84dba5dc528349, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WebGLVideoBackground
-  _fileName: video_1280.webm
+  _fileName: Background9hd.mp4
 --- !u!1 &1021057170
 GameObject:
   m_ObjectHideFlags: 0
