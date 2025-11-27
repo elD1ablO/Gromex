@@ -218,12 +218,15 @@ public class UIManager : MonoBehaviour
 
     public void GoToMenuTokenUsed()
     {
+        // Called after an online game where token has been consumed on the server.
+        // Now we simply return to menu; LoginHandler will open LoginPanel to request a new token.
         _coinSpawner?.StopCoinSpawning();
 
         _startScreen.SetActive(true);
 
-        SetStartButtonsVisible(false);
-        ShowTokenUsedMessage(true);
+        // Keep start buttons visible; no hard "token used" lock state here.
+        SetStartButtonsVisible(true);
+        ShowTokenUsedMessage(false);
 
         EnterLivesMode();
         BestScoreUpdate();

@@ -52,6 +52,20 @@ public class LoginHandler : MonoBehaviour
         StartCoroutine(ValidateTokenCoroutine(_testToken.Trim()));
     }
 
+    /// <summary>
+    /// Called by GameManager after a finished online game to request a new token.
+    /// </summary>
+    public void ShowLoginPanelForNewToken()
+    {
+        if (_loginPanel != null)
+            _loginPanel.SetActive(true);
+
+        if (_tokenInputField != null)
+            _tokenInputField.text = string.Empty;
+
+        SetFlowText("Please enter a new game token.");
+    }
+
     #endregion
 
     private IEnumerator ValidateTokenCoroutine(string gameToken)
@@ -131,12 +145,19 @@ public class LoginHandler : MonoBehaviour
             {
                 SetFlowText($"Token valid. Ticket: {resp.serial_number} (id {resp.ticket_id}), user {resp.user_id}. Expires: {resp.expires_at}");
 
+                // Save session data for further requests
                 SessionData.TicketId = resp.ticket_id;
                 SessionData.GameToken = gameToken;
                 SessionData.BearerToken = _bearerToken;
+                SessionData.UserId = resp.user_id; // ensure Supabase logging has correct user id
 
                 if (_loginPanel != null)
                     _loginPanel.SetActive(false);
+
+                // Notify GameManager that a new valid token is present
+                var gm = FindFirstObjectByType<GameManager>();
+                if (gm != null)
+                    gm.OnNewTokenValidated();
 
                 Debug.Log($"ValidateToken success. TicketId={resp.ticket_id}, UserId={resp.user_id}");
             }

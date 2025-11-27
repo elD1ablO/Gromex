@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     private PlayerController _playerController;
     private CoinSpawner _coinSpawner;
     private SupabaseLeaderboard _supabaseLeaderboard;
+    private LoginHandler _loginHandler;
 
     private int _currentLives;
     private int _currentScore;
@@ -35,6 +36,7 @@ public class GameManager : MonoBehaviour
         _playerController = FindFirstObjectByType<PlayerController>();
         _coinSpawner = FindFirstObjectByType<CoinSpawner>();
         _supabaseLeaderboard = FindFirstObjectByType<SupabaseLeaderboard>();
+        _loginHandler = FindFirstObjectByType<LoginHandler>();
     }
 
     private void Start()
@@ -87,7 +89,7 @@ public class GameManager : MonoBehaviour
         _currentLives = _maxLives;
         _currentScore = 0;
 
-        // mark session start time for Supabase log
+        // Mark session start time for Supabase logging
         _sessionStartTimeUtc = DateTime.UtcNow;
         _hasSessionStartTime = true;
 
@@ -105,7 +107,7 @@ public class GameManager : MonoBehaviour
         _timeLeft = Mathf.Max(0f, timeSeconds);
         _currentScore = 0;
 
-        // mark session start time for Supabase log
+        // Mark session start time for Supabase logging
         _sessionStartTimeUtc = DateTime.UtcNow;
         _hasSessionStartTime = true;
 
@@ -168,25 +170,30 @@ public class GameManager : MonoBehaviour
             PlayerPrefs.Save();
         }
 
-        // --- Supabase log (always, even without ticket / token) ---
+        // --- Supabase logging (works both online and offline) ---
         DateTime endTimeUtc = DateTime.UtcNow;
         DateTime startTimeUtc = _hasSessionStartTime ? _sessionStartTimeUtc : endTimeUtc;
 
-        int? ticketIdNullable = (SessionData.TicketId > 0) ? SessionData.TicketId : (int?)null;
+        int? ticketIdNullable = SessionData.TicketId > 0 ? SessionData.TicketId : (int?)null;
+        int? userIdNullable = SessionData.UserId > 0 ? SessionData.UserId : (int?)null;
 
-        _supabaseLeaderboard?.LogGameSession(
-            startTimeUtc,
-            endTimeUtc,
-            _currentScore,
-            _isTimeMode,
-            ticketIdNullable
-        );
-        // ------------------------------------------------------------
+        if (_supabaseLeaderboard != null)
+        {
+            _supabaseLeaderboard.LogGameSession(
+                startTimeUtc,
+                endTimeUtc,
+                _currentScore,
+                _isTimeMode,
+                ticketIdNullable,
+                userIdNullable
+            );
+        }
+        // -------------------------------------------------------
 
         // SAFETY: if we are playing without a ticket, just go to menu and show score
         if (SessionData.TicketId == 0 || string.IsNullOrEmpty(SessionData.GameToken))
         {
-            Debug.Log("<color=yellow>Offline mode – no ticket, returning to menu without server call.</color>");
+            Debug.Log("<color=yellow>Offline mode - no ticket, returning to menu without server call.</color>");
 
             _uiManager?.GoToMenu();
 
@@ -204,10 +211,15 @@ public class GameManager : MonoBehaviour
 
         _tokenUsed = true;
 
+        // Clear session token so that a new one is required
         SessionData.TicketId = 0;
         SessionData.GameToken = "";
 
+        // Return to menu UI
         _uiManager?.GoToMenuTokenUsed();
+
+        // Reopen login panel so user can enter a new token for the next game
+        _loginHandler?.ShowLoginPanelForNewToken();
 
         ResetGameState();
     }
@@ -260,7 +272,6 @@ public class GameManager : MonoBehaviour
         _currentScore = 0;
         _isTimeMode = false;
         _timeLeft = 0f;
-
         _hasSessionStartTime = false;
     }
 

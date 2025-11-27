@@ -8,8 +8,7 @@ using UnityEngine.Networking;
 
 /// <summary>
 /// Simple Supabase client for logging game sessions into "Gromex" table.
-/// It is designed to work even without game token / ticketId:
-/// missing numeric values are sent as JSON null.
+/// Works even if there is no ticket or user id (those fields become null).
 /// </summary>
 public class SupabaseLeaderboard : MonoBehaviour
 {
@@ -35,21 +34,16 @@ public class SupabaseLeaderboard : MonoBehaviour
 
     /// <summary>
     /// Public entry point for GameManager.
-    /// This method starts a coroutine internally; GameManager does not need to.
     /// </summary>
-    /// <param name="startUtc">Session start time in UTC.</param>
-    /// <param name="endUtc">Session end time in UTC.</param>
-    /// <param name="score">Final score of the session.</param>
-    /// <param name="isTimeMode">True if session was in Time mode, false if Lives mode.</param>
-    /// <param name="ticketId">Ticket ID or null if there is none.</param>
     public void LogGameSession(
         DateTime startUtc,
         DateTime endUtc,
         int score,
         bool isTimeMode,
-        int? ticketId)
+        int? ticketId,
+        int? userId)
     {
-        StartCoroutine(LogGameSessionRoutine(startUtc, endUtc, score, isTimeMode, ticketId));
+        StartCoroutine(LogGameSessionRoutine(startUtc, endUtc, score, isTimeMode, ticketId, userId));
     }
 
     /// <summary>
@@ -60,7 +54,8 @@ public class SupabaseLeaderboard : MonoBehaviour
         DateTime endUtc,
         int score,
         bool isTimeMode,
-        int? ticketId)
+        int? ticketId,
+        int? userId)
     {
         if (string.IsNullOrEmpty(_supabaseUrl) || string.IsNullOrEmpty(_anonKey))
         {
@@ -77,12 +72,11 @@ public class SupabaseLeaderboard : MonoBehaviour
         string outcome = isTimeMode ? "time_mode" : "lives_mode";
         float payout = score;
 
-        // Build JSON manually to be able to send `null` values.
         string json = BuildSessionJson(
-            userId: null,          // we do not have user id yet -> null
+            userId: userId,
             startTimeIso: startIso,
             stopTimeIso: endIso,
-            ticketId: ticketId,    // null if no ticket
+            ticketId: ticketId,
             status: status,
             outcome: outcome,
             payout: payout,
@@ -113,7 +107,6 @@ public class SupabaseLeaderboard : MonoBehaviour
 
     /// <summary>
     /// Optional API: load top scores ordered by score DESC.
-    /// You can use it later for a leaderboard UI.
     /// </summary>
     public IEnumerator GetTopScores(int limit, Action<List<LeaderboardEntry>> onCompleted)
     {
@@ -156,7 +149,7 @@ public class SupabaseLeaderboard : MonoBehaviour
     /// Builds JSON object for Supabase INSERT with support of null values.
     /// </summary>
     private string BuildSessionJson(
-        long? userId,
+        int? userId,
         string startTimeIso,
         string stopTimeIso,
         int? ticketId,
@@ -168,16 +161,16 @@ public class SupabaseLeaderboard : MonoBehaviour
         var sb = new StringBuilder();
         sb.Append('{');
 
-        // startTime and stopTime
+        // startTime and stopTime (required)
         sb.Append("\"startTime\":\"").Append(startTimeIso).Append("\",");
         sb.Append("\"stopTime\":\"").Append(stopTimeIso).Append("\",");
 
-        // userId: use 0 when we do not have an ID
+        // userId (nullable)
         sb.Append("\"userId\":");
         if (userId.HasValue)
             sb.Append(userId.Value.ToString(CultureInfo.InvariantCulture));
         else
-            sb.Append("0");
+            sb.Append("null");
         sb.Append(',');
 
         // ticketId (nullable)
@@ -191,37 +184,25 @@ public class SupabaseLeaderboard : MonoBehaviour
         // status (nullable text)
         sb.Append("\"status\":");
         if (!string.IsNullOrEmpty(status))
-        {
             sb.Append('"').Append(EscapeJsonString(status)).Append('"');
-        }
         else
-        {
             sb.Append("null");
-        }
         sb.Append(',');
 
         // outcome (nullable text)
         sb.Append("\"outcome\":");
         if (!string.IsNullOrEmpty(outcome))
-        {
             sb.Append('"').Append(EscapeJsonString(outcome)).Append('"');
-        }
         else
-        {
             sb.Append("null");
-        }
         sb.Append(',');
 
         // payout (nullable numeric)
         sb.Append("\"payout\":");
         if (payout.HasValue)
-        {
             sb.Append(payout.Value.ToString(CultureInfo.InvariantCulture));
-        }
         else
-        {
             sb.Append("null");
-        }
         sb.Append(',');
 
         // score (required numeric)
