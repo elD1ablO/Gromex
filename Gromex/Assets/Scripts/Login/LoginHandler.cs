@@ -1,14 +1,10 @@
 using System.Collections;
+using System.Text;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
 
-/// <summary>
-/// LoginHandler - validates game_token via API and stores session info for the game.
-/// Notes:
-/// - For test only you can set _bearerToken in inspector (DO NOT ship that in production).
-/// - After successful validation SessionData is filled (TicketId, GameToken, BearerToken).
-/// </summary>
 public class LoginHandler : MonoBehaviour
 {
     [Header("UI")]
@@ -33,9 +29,6 @@ public class LoginHandler : MonoBehaviour
 
     #region Public UI methods
 
-    /// <summary>
-    /// Called by UI button. Reads token from input field if available, otherwise uses _testToken.
-    /// </summary>
     public void OnValidateButtonPressed()
     {
         string token = _tokenInputField != null ? _tokenInputField.text?.Trim() : _testToken?.Trim();
@@ -48,9 +41,6 @@ public class LoginHandler : MonoBehaviour
         StartCoroutine(ValidateTokenCoroutine(token));
     }
 
-    /// <summary>
-    /// Convenience: validate the test token assigned in inspector.
-    /// </summary>
     public void ValidateTestToken()
     {
         if (string.IsNullOrEmpty(_testToken))
@@ -75,16 +65,26 @@ public class LoginHandler : MonoBehaviour
 
         using (var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
         {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(bodyJson);
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(bodyJson);
             req.uploadHandler = new UploadHandlerRaw(bodyRaw);
             req.downloadHandler = new DownloadHandlerBuffer();
-            req.SetRequestHeader("Content-Type", "application/json");
 
-            // For local testing only. Do NOT embed bearer token in production builds.
+            // Track headers manually (Unity 6 workaround)
+            Dictionary<string, string> headerMap = new Dictionary<string, string>();
+
+            req.SetRequestHeader("Content-Type", "application/json");
+            headerMap["Content-Type"] = "application/json";
+
             if (!string.IsNullOrWhiteSpace(_bearerToken))
+            {
                 req.SetRequestHeader("Authorization", "Bearer " + _bearerToken);
+                headerMap["Authorization"] = "Bearer " + _bearerToken;
+            }
 
             req.timeout = Mathf.Max(5, _requestTimeoutSeconds);
+
+            // Debug full request before sending
+            LogRequestDebug(url, bodyJson, headerMap);
 
             yield return req.SendWebRequest();
 
@@ -93,10 +93,10 @@ public class LoginHandler : MonoBehaviour
 #else
             bool isNetworkOrHttpError = req.isNetworkError || req.isHttpError;
 #endif
+
             string responseText = req.downloadHandler != null ? req.downloadHandler.text : null;
             if (isNetworkOrHttpError)
             {
-                // Try to surface server-provided error if present
                 if (!string.IsNullOrEmpty(responseText))
                 {
                     ValidateResponse maybe = TryParseValidateResponse(responseText);
@@ -119,7 +119,6 @@ public class LoginHandler : MonoBehaviour
                 yield break;
             }
 
-            // Parse response
             ValidateResponse resp = TryParseValidateResponse(responseText);
             if (resp == null)
             {
@@ -130,13 +129,11 @@ public class LoginHandler : MonoBehaviour
 
             if (resp.success)
             {
-                // Success: store session data and hide login panel
                 SetFlowText($"Token valid. Ticket: {resp.serial_number} (id {resp.ticket_id}), user {resp.user_id}. Expires: {resp.expires_at}");
 
-                // Save to global SessionData for later use (finish endpoint, etc.)
                 SessionData.TicketId = resp.ticket_id;
                 SessionData.GameToken = gameToken;
-                SessionData.BearerToken = _bearerToken; // only for tests; empty in production
+                SessionData.BearerToken = _bearerToken;
 
                 if (_loginPanel != null)
                     _loginPanel.SetActive(false);
@@ -162,31 +159,58 @@ public class LoginHandler : MonoBehaviour
             Debug.Log("[LoginHandler] " + text);
     }
 
+    /// <summary>
+    /// Logs: URL, BODY, HEADERS, cURL
+    /// Works in Unity 6 (no GetRequestHeaders).
+    /// </summary>
+    private void LogRequestDebug(string url, string body, Dictionary<string, string> headers)
+    {
+        StringBuilder headersSb = new StringBuilder();
+        foreach (var kv in headers)
+            headersSb.AppendLine($"{kv.Key}: {kv.Value}");
+
+        StringBuilder curl = new StringBuilder();
+        curl.AppendLine($"curl -X POST \"{url}\" \\");
+        foreach (var kv in headers)
+            curl.AppendLine($"  -H \"{kv.Key}: {kv.Value}\" \\");
+        curl.Append($"  -d '{body}'");
+
+        Debug.Log(
+$@"[LoginHandler REQUEST] -----------------------
+URL:
+{url}
+
+BODY:
+{body}
+
+HEADERS:
+{headersSb}
+
+AS cURL:
+{curl}
+
+----------------------------------------------");
+    }
+
     private ValidateResponse TryParseValidateResponse(string json)
     {
         if (string.IsNullOrEmpty(json))
             return null;
 
-        // Try Unity's JsonUtility
         try
         {
             var parsed = JsonUtility.FromJson<ValidateResponse>(json);
             if (parsed != null && (parsed.success || !string.IsNullOrEmpty(parsed.error) || parsed.ticket_id != 0))
                 return parsed;
         }
-        catch { /* ignore */ }
+        catch { }
 
-        // Fallback: attempt minimal manual parsing for "success" and "error"
-        // (avoid adding JSON lib dependency here)
-        // look for "success": true/false
         try
         {
             string lower = json.ToLowerInvariant();
-            if (lower.Contains("\"success\":true") || lower.Contains("\"success\":  true"))
+            if (lower.Contains("\"success\":true"))
             {
-                // best-effort: return a response with success=true (other fields may be missing)
                 var tmp = new ValidateResponse() { success = true };
-                // try to extract ticket_id and others using simple search
                 tmp.ticket_id = TryExtractInt(json, "ticket_id");
                 tmp.serial_number = TryExtractString(json, "serial_number");
                 tmp.user_id = TryExtractInt(json, "user_id");
@@ -201,7 +225,7 @@ public class LoginHandler : MonoBehaviour
                 return tmp;
             }
         }
-        catch { /* ignore */ }
+        catch { }
 
         return null;
     }
@@ -215,17 +239,17 @@ public class LoginHandler : MonoBehaviour
         if (idx < 0)
             return 0;
         idx += pattern.Length;
-        // skip spaces
+
         while (idx < json.Length && char.IsWhiteSpace(json[idx]))
             idx++;
-        // read number
+
         int start = idx;
         while (idx < json.Length && (char.IsDigit(json[idx]) || json[idx] == '-'))
             idx++;
-        string numStr = json.Substring(start, idx - start);
-        int res;
-        if (int.TryParse(numStr, out res))
+
+        if (int.TryParse(json.Substring(start, idx - start), out int res))
             return res;
+
         return 0;
     }
 
@@ -233,22 +257,26 @@ public class LoginHandler : MonoBehaviour
     {
         if (string.IsNullOrEmpty(json))
             return null;
+
         string pattern = $"\"{key}\":";
         int idx = json.IndexOf(pattern);
         if (idx < 0)
             return null;
         idx += pattern.Length;
-        // find first quote
+
         while (idx < json.Length && json[idx] != '"' && json[idx] != '\'')
             idx++;
         if (idx >= json.Length)
             return null;
+
         char quote = json[idx++];
         int start = idx;
+
         while (idx < json.Length && json[idx] != quote)
             idx++;
         if (idx >= json.Length)
             return null;
+
         return json.Substring(start, idx - start);
     }
 
@@ -256,9 +284,7 @@ public class LoginHandler : MonoBehaviour
     {
         if (string.IsNullOrEmpty(s))
             return s;
-        if (s.Length <= max)
-            return s;
-        return s.Substring(0, max) + "...";
+        return s.Length <= max ? s : s.Substring(0, max) + "...";
     }
 
     #endregion

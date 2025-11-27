@@ -59,11 +59,10 @@ public class UIManager : MonoBehaviour
         _coinSpawner = FindFirstObjectByType<CoinSpawner>();
         _gameManager = FindFirstObjectByType<GameManager>();
 
-        // Ensure countdown component reference (may be null if not assigned)
+        // Ensure countdown reference
         if (_countdownCanvas != null)
         {
             _countdown = _countdownCanvas.GetComponent<Countdown>();
-            // Ensure countdown canvas initially hidden
             _countdownCanvas.SetActive(false);
         }
 
@@ -73,7 +72,6 @@ public class UIManager : MonoBehaviour
         if (_startTimeGameButton != null)
             _startTimeGameButton.onClick.AddListener(OnStartTimeButton);
 
-        // In-game menu buttons
         if (_menuButton != null)
             _menuButton.onClick.AddListener(OpenPauseMenu);
 
@@ -85,33 +83,30 @@ public class UIManager : MonoBehaviour
 
         BestScoreUpdate();
 
-        // ensure UI initial visibility
         ShowTimer(false);
         ShowTokenUsedMessage(false);
 
-        // make sure in-game menu is hidden at start
         if (_inGameMenu != null)
             _inGameMenu.SetActive(false);
 
-        // init minus timer visual state
+        // Apply UI colors
+        if (_scoreText != null)
+            _scoreText.color = new Color32(0x00, 0x25, 0x35, 255); // #002535
+
+        if (_timerText != null)
+            _timerText.color = new Color32(0x6C, 0xCF, 0xE2, 255); // #6CCFE2
+
         if (_minusTimerText != null)
         {
             _minusTimerBaseScale = _minusTimerText.rectTransform.localScale;
             _minusTimerText.gameObject.SetActive(false);
+            _minusTimerText.color = new Color32(0xFF, 0x4F, 0x1A, 255); // #FF4F1A
         }
     }
 
     private void BestScoreUpdate()
     {
-        int bestScore = 0;
-
-        if (PlayerPrefs.HasKey(BEST_SCORE_KEY))
-        {
-            bestScore = PlayerPrefs.GetInt(BEST_SCORE_KEY, 0);
-
-            if (bestScore < 0)
-                bestScore = 0;
-        }
+        int bestScore = PlayerPrefs.GetInt(BEST_SCORE_KEY, 0);
 
         if (_bestScoreText != null)
             _bestScoreText.text = bestScore.ToString();
@@ -121,31 +116,22 @@ public class UIManager : MonoBehaviour
     {
         _startScreen.SetActive(false);
 
-        // Player stays in idle until user chooses a position (keyboard / UI button)
-
-        // Show player turn buttons immediately and keep them active during countdown
         if (_playerTurnButtonsContainer != null)
             _playerTurnButtonsContainer.SetActive(true);
 
-        // Spawn one static (non-moving) coin for countdown preview
         _coinSpawner?.SpawnPreviewCoin();
 
-        // Activate countdown canvas and start countdown — when finished, start the actual game
         if (_countdownCanvas != null && _countdown != null)
         {
             _countdownCanvas.SetActive(true);
             _countdown.StartCountdown(() =>
             {
-                // start lives game in GameManager (this will also start normal coin spawning and release preview coin)
                 _gameManager?.StartLivesGame();
-
-                // hide countdown canvas
                 _countdownCanvas.SetActive(false);
             });
         }
         else
         {
-            // fallback — if no countdown configured, start immediately
             _gameManager?.StartLivesGame();
         }
     }
@@ -154,18 +140,11 @@ public class UIManager : MonoBehaviour
     {
         _startScreen.SetActive(false);
 
-        // Player stays in idle until user chooses a position (keyboard / UI button)
-
-        // Immediately switch UI to time-mode layout:
-        // - hide lives
-        // - show timer with full time value
         EnterTimeMode(_timeRemaining);
 
-        // Show player turn buttons immediately
         if (_playerTurnButtonsContainer != null)
             _playerTurnButtonsContainer.SetActive(true);
 
-        // Spawn one static (non-moving) coin for countdown preview
         _coinSpawner?.SpawnPreviewCoin();
 
         if (_countdownCanvas != null && _countdown != null)
@@ -173,16 +152,12 @@ public class UIManager : MonoBehaviour
             _countdownCanvas.SetActive(true);
             _countdown.StartCountdown(() =>
             {
-                // start time game in GameManager (this will actually start time ticking)
                 _gameManager?.StartTimeGame(_timeRemaining);
-
-                // hide countdown canvas
                 _countdownCanvas.SetActive(false);
             });
         }
         else
         {
-            // fallback
             _gameManager?.StartTimeGame(_timeRemaining);
         }
     }
@@ -195,6 +170,12 @@ public class UIManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(timeLeft / 60f);
         int seconds = Mathf.FloorToInt(timeLeft % 60f);
 
+        // Special color for last 5 seconds
+        if (timeLeft <= 5f)
+            _timerText.color = new Color32(0xFF, 0x4F, 0x1A, 255); // #FF4F1A
+        else
+            _timerText.color = new Color32(0x6C, 0xCF, 0xE2, 255); // #6CCFE2
+
         if (minutes > 0)
             _timerText.text = $"{minutes:00}:{seconds:00}";
         else
@@ -203,10 +184,7 @@ public class UIManager : MonoBehaviour
 
     public void EnterTimeMode(float timeSeconds)
     {
-        // Lives are not needed in time mode
         ShowLives(false);
-
-        // Timer should be visible in time mode
         ShowTimer(true);
         UpdateTimerDisplay(timeSeconds);
 
@@ -231,56 +209,40 @@ public class UIManager : MonoBehaviour
         if (_livesContainer != null && _lifePrefab != null)
         {
             foreach (Transform child in _livesContainer.transform)
-            {
                 Object.Destroy(child.gameObject);
-            }
 
             for (int i = 0; i < currentLives; i++)
-            {
                 Object.Instantiate(_lifePrefab, _livesContainer.transform);
-            }
         }
     }
 
-    /// <summary>
-    /// Called when game ends and token was used - hides start buttons
-    /// </summary>
     public void GoToMenuTokenUsed()
     {
         _coinSpawner?.StopCoinSpawning();
 
         _startScreen.SetActive(true);
 
-        // hide start buttons since token is used
         SetStartButtonsVisible(false);
-
-        // show message that token was used
         ShowTokenUsedMessage(true);
 
         EnterLivesMode();
         BestScoreUpdate();
 
-        // Reset player visuals back to idle in menu
         _playerController?.ResetToIdle();
     }
 
-    /// <summary>
-    /// Standard menu return (token still valid or for other cases)
-    /// </summary>
     public void GoToMenu()
     {
         _coinSpawner?.StopCoinSpawning();
 
         _startScreen.SetActive(true);
 
-        // show start buttons
         SetStartButtonsVisible(true);
         ShowTokenUsedMessage(false);
 
         EnterLivesMode();
         BestScoreUpdate();
 
-        // Reset player visuals back to idle in menu
         _playerController?.ResetToIdle();
     }
 
@@ -315,9 +277,6 @@ public class UIManager : MonoBehaviour
     //   MINUS TIMER FX (-5s)
     // ==========================
 
-    /// <summary>
-    /// Plays a punch-scale + fade-out effect for the "-time" text.
-    /// </summary>
     public void PlayMinusTimeEffect()
     {
         if (_minusTimerText == null)
@@ -333,15 +292,11 @@ public class UIManager : MonoBehaviour
     {
         RectTransform rt = _minusTimerText.rectTransform;
 
-        // Start state
         _minusTimerText.gameObject.SetActive(true);
 
-        // reset alpha to 1
-        Color c = _minusTimerText.color;
-        c.a = 1f;
-        _minusTimerText.color = c;
+        // reset color to orange
+        _minusTimerText.color = new Color32(0xFF, 0x4F, 0x1A, 255);
 
-        // punch scale parameters
         float punchScale = 1.5f;
         float punchDuration = 0.15f;
         float holdDuration = 1.0f;
@@ -352,42 +307,41 @@ public class UIManager : MonoBehaviour
 
         rt.localScale = startScale;
 
-        // punch: scale from bigger back to normal
         float t = 0f;
         while (t < punchDuration)
         {
             t += Time.deltaTime;
             float lerp = Mathf.Clamp01(t / punchDuration);
-            // easing: a bit smoother than linear
             float eased = 1f - Mathf.Pow(1f - lerp, 2f);
+
             rt.localScale = Vector3.Lerp(startScale, endScale, eased);
             yield return null;
         }
 
         rt.localScale = endScale;
 
-        // hold fully visible
         yield return new WaitForSeconds(holdDuration);
 
-        // fade out
         t = 0f;
         while (t < fadeDuration)
         {
             t += Time.deltaTime;
             float lerp = Mathf.Clamp01(t / fadeDuration);
             float alpha = Mathf.Lerp(1f, 0f, lerp);
+
             Color cc = _minusTimerText.color;
             cc.a = alpha;
             _minusTimerText.color = cc;
+
             yield return null;
         }
 
-        // hide and reset alpha/scale for next time
         _minusTimerText.gameObject.SetActive(false);
 
         Color final = _minusTimerText.color;
         final.a = 1f;
         _minusTimerText.color = final;
+
         rt.localScale = _minusTimerBaseScale;
 
         _minusTimerRoutine = null;
@@ -404,10 +358,7 @@ public class UIManager : MonoBehaviour
 
         _isPaused = true;
 
-        // Freeze everything, including countdown
         Time.timeScale = 0f;
-
-        // Stop spawning new coins (existing ones will be frozen by timeScale = 0)
         _coinSpawner?.StopCoinSpawning();
 
         if (_inGameMenu != null)
@@ -421,16 +372,10 @@ public class UIManager : MonoBehaviour
 
         _isPaused = false;
 
-        // Resume time
         Time.timeScale = 1f;
 
-        // If game is running, resume spawning.
-        // If we are still on countdown screen, IsGameRunning == false
-        // and preview coin will stay static.
         if (_gameManager != null && _gameManager.IsGameRunning)
-        {
             _coinSpawner?.StartCoinSpawning();
-        }
 
         if (_inGameMenu != null)
             _inGameMenu.SetActive(false);
@@ -438,14 +383,12 @@ public class UIManager : MonoBehaviour
 
     private void QuitGame()
     {
-        // Restore time just in case
         Time.timeScale = 1f;
         _isPaused = false;
 
         if (_inGameMenu != null)
             _inGameMenu.SetActive(false);
 
-        // Properly end game session
         _gameManager?.EndGameSession();
     }
 }

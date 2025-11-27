@@ -10,17 +10,11 @@ public class Countdown : MonoBehaviour
 
     private bool _isRunning = false;
 
-    /// <summary>
-    /// Start countdown with no callback.
-    /// </summary>
     public void StartCountdown()
     {
         StartCountdown(null);
     }
 
-    /// <summary>
-    /// Start countdown and call onComplete when finished.
-    /// </summary>
     public void StartCountdown(Action onComplete)
     {
         if (!_isRunning)
@@ -34,17 +28,14 @@ public class Countdown : MonoBehaviour
         if (_countdownGO != null)
             _countdownGO.SetActive(true);
 
+        Color32 mainColor = new Color32(0x6C, 0xCF, 0xE2, 255); // #6CCFE2
+
         for (int i = 3; i > 0; i--)
         {
             if (_text != null)
-                _text.text = i.ToString();
-
-            // Set color depending on number
-            if (_text != null)
             {
-                if (i == 3) _text.color = Color.red;
-                if (i == 2) _text.color = Color.yellow;
-                if (i == 1) _text.color = Color.green;
+                _text.text = i.ToString();
+                _text.color = mainColor;
             }
 
             // Reset scale + alpha
@@ -58,7 +49,6 @@ public class Countdown : MonoBehaviour
                 _text.color = cc;
             }
 
-            // Animate scale 1 → 2 over 1 second
             float timer = 0f;
             float duration = 1f;
 
@@ -67,12 +57,10 @@ public class Countdown : MonoBehaviour
                 timer += Time.deltaTime;
                 float t = Mathf.Clamp01(timer / duration);
 
-                // Scale animation
                 float scale = Mathf.Lerp(1f, 2f, t);
                 if (_countdownGO != null)
                     _countdownGO.transform.localScale = new Vector3(scale, scale, scale);
 
-                // Start fade-out after scale reaches 1.5 (complete fade by 1.95)
                 if (_text != null && scale >= 1.5f)
                 {
                     float fadeProgress = Mathf.InverseLerp(1.5f, 1.95f, scale);
@@ -91,7 +79,6 @@ public class Countdown : MonoBehaviour
 
         _isRunning = false;
 
-        // invoke completion callback
         try
         {
             onComplete?.Invoke();
