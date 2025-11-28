@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour
     [Header("Leaderboard  references")]
     [SerializeField] private GameObject _leaderboardUI;
     [SerializeField] private Button _backToMainMenuButton;
+    [SerializeField] private LeaderboardHandler _leaderboardHandler;
 
     [Header("Token Used State")]
     [SerializeField] private TMP_Text _tokenUsedText;
@@ -83,6 +84,7 @@ public class UIManager : MonoBehaviour
 
         if (_backToMainMenuButton != null)
             _backToMainMenuButton.onClick.AddListener(HideLeaderboard);
+
         if (_menuButton != null)
             _menuButton.onClick.AddListener(OpenPauseMenu);
 
@@ -113,6 +115,10 @@ public class UIManager : MonoBehaviour
             _minusTimerText.gameObject.SetActive(false);
             _minusTimerText.color = new Color32(0xFF, 0x4F, 0x1A, 255); // #FF4F1A
         }
+
+        // Ensure leaderboard UI is hidden at start
+        if (_leaderboardUI != null)
+            _leaderboardUI.SetActive(false);
     }
 
     private void BestScoreUpdate()
@@ -172,6 +178,37 @@ public class UIManager : MonoBehaviour
             _gameManager?.StartTimeGame(_timeRemaining);
         }
     }
+
+    // ==========================
+    //   LEADERBOARD BUTTONS
+    // ==========================
+
+    private void ShowLeaderboard()
+    {
+        if (_leaderboardUI != null)
+            _leaderboardUI.SetActive(true);
+
+        // Hide start buttons while leaderboard is open
+        //SetStartButtonsVisible(false);
+
+        // Always open with Time-mode leaderboard by default
+        _leaderboardHandler?.ShowLeaderboard(true);
+    }
+
+    private void HideLeaderboard()
+    {
+        if (_leaderboardUI != null)
+            _leaderboardUI.SetActive(false);
+
+        // Return start buttons
+        SetStartButtonsVisible(true);
+
+        _leaderboardHandler?.HideLeaderboard();
+    }
+
+    // ==========================
+    //      TIMER / LIVES
+    // ==========================
 
     public void UpdateTimerDisplay(float timeLeft)
     {
@@ -243,23 +280,6 @@ public class UIManager : MonoBehaviour
         BestScoreUpdate();
 
         _playerController?.ResetToIdle();
-    }
-    private void ShowLeaderboard()
-    {
-        if (_leaderboardUI != null)
-            _leaderboardUI.SetActive(true);
-
-        // Ховаємо стартові кнопки
-        SetStartButtonsVisible(false);
-    }
-
-    private void HideLeaderboard()
-    {
-        if (_leaderboardUI != null)
-            _leaderboardUI.SetActive(false);
-
-        // Повертаємо стартові кнопки
-        SetStartButtonsVisible(true);
     }
 
     public void GoToMenu()

@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 /// <summary>
 /// Simple Supabase client for logging game sessions into "Gromex" table.
 /// Works even if there is no ticket or user id (those fields become null).
+/// Also provides simple leaderboard queries.
 /// </summary>
 public class SupabaseLeaderboard : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class SupabaseLeaderboard : MonoBehaviour
     {
         public long userId;
         public float score;
+        public string outcome; // "time_mode" / "lives_mode"
     }
 
     [Serializable]
@@ -106,9 +108,29 @@ public class SupabaseLeaderboard : MonoBehaviour
     }
 
     /// <summary>
-    /// Optional API: load top scores ordered by score DESC.
+    /// Load top scores (all outcomes, no filter).
+    /// Kept for flexibility, but for your case use GetTopScoresByMode.
     /// </summary>
     public IEnumerator GetTopScores(int limit, Action<List<LeaderboardEntry>> onCompleted)
+    {
+        yield return GetTopScoresInternal(limit, null, onCompleted);
+    }
+
+    /// <summary>
+    /// Load top scores for specific mode:
+    /// isTimeMode = true  => "time_mode"
+    /// isTimeMode = false => "lives_mode"
+    /// </summary>
+    public IEnumerator GetTopScoresByMode(int limit, bool isTimeMode, Action<List<LeaderboardEntry>> onCompleted)
+    {
+        string outcomeFilter = isTimeMode ? "time_mode" : "lives_mode";
+        yield return GetTopScoresInternal(limit, outcomeFilter, onCompleted);
+    }
+
+    /// <summary>
+    /// Internal helper for leaderboard queries.
+    /// </summary>
+    private IEnumerator GetTopScoresInternal(int limit, string outcomeFilter, Action<List<LeaderboardEntry>> onCompleted)
     {
         if (string.IsNullOrEmpty(_supabaseUrl) || string.IsNullOrEmpty(_anonKey))
         {
@@ -117,8 +139,15 @@ public class SupabaseLeaderboard : MonoBehaviour
             yield break;
         }
 
+        // Base query: select userId, score, outcome ordered by score desc
         string url = $"{_supabaseUrl}/rest/v1/{TableName}" +
-                     $"?select=userId,score&order=score.desc&limit={limit}";
+                     $"?select=userId,score,outcome&order=score.desc&limit={limit}";
+
+        // Optional: filter by outcome ("time_mode" / "lives_mode")
+        if (!string.IsNullOrEmpty(outcomeFilter))
+        {
+            url += $"&outcome=eq.{outcomeFilter}";
+        }
 
         var request = UnityWebRequest.Get(url);
         request.SetRequestHeader("apikey", _anonKey);
@@ -134,6 +163,8 @@ public class SupabaseLeaderboard : MonoBehaviour
         }
 
         string json = request.downloadHandler.text;
+
+        // JsonUtility does not parse top-level arrays, so wrap it.
         string wrapped = "{\"items\":" + json + "}";
 
         LeaderboardWrapper wrapper = JsonUtility.FromJson<LeaderboardWrapper>(wrapped);
