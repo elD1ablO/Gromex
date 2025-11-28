@@ -1913,13 +1913,13 @@ AudioSource:
   m_GameObject: {fileID: 694005860}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 24300002, guid: fad445323ca327746a6c6e7975eb0de3, type: 2}
+  OutputAudioMixerGroup: {fileID: 24300002, guid: 7830bc546b16cca4a85e5248c479c9e3, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 2fd40d0d0f24bca48a70154020528a43, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
   m_Volume: 0.162
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -2028,10 +2028,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da6fff5093fd74a918047014f538bcf8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
-  _audioSource: {fileID: 694005861}
-  _sfxMixer: {fileID: 4040002875270621739, guid: 016a7591e0951bd4aad415d7cdf5c32b, type: 2}
-  _coinCatch: {fileID: 8300000, guid: 7aa6613bb03202b42be2c7e5fa6a878e, type: 3}
-  _coinFail: {fileID: 8300000, guid: ce0da7bbb61cdc343b02851618f8b54b, type: 3}
+  _masterVolume: 0.5
+  _soundsCollection: {fileID: 11400000, guid: 0d7dfd189a7d2d846bd27bd026c3c65d, type: 2}
+  _sfxMixer: {fileID: 8592892409871332481, guid: 7830bc546b16cca4a85e5248c479c9e3, type: 2}
+  _musicMixer: {fileID: 3118382573621648367, guid: 7830bc546b16cca4a85e5248c479c9e3, type: 2}
+  _playMenuMusicOnStart: 1
 --- !u!1 &700943160
 GameObject:
   m_ObjectHideFlags: 0
@@ -2650,7 +2651,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7805440163278327442, guid: b1a86beb86b604b7c8e3d55c0db19e35, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7892097145366898784, guid: b1a86beb86b604b7c8e3d55c0db19e35, type: 3}
       propertyPath: m_SizeDelta.x

@@ -1,20 +1,19 @@
 using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Audio/Sounds Collection")]
 public class SoundsCollectionSO : ScriptableObject
 {
-    [Header("Music")]
-    public SoundSO[] DiscoBall;
-    public SoundSO[] Music;
+    [Header("Menu (1.ogg)")]
+    public SoundSO[] Menu;
 
-    [Header("SFX")]
-    public SoundSO[] GunShot;
-    public SoundSO[] Jump;
-    public SoundSO[] Splat;
-    public SoundSO[] Jetpack;
-    public SoundSO[] GrenadeShoot;
-    public SoundSO[] GrenadeExplode;
-    public SoundSO[] GrenadeBeep;
-    public SoundSO[] PlayerHit;
-    public SoundSO[] PlayerDeath;
+    [Header("Game mode start")]
+    public SoundSO[] TimeMode;   
+    public SoundSO[] LivesMode;  
+
+    [Header("Coins")]
+    public SoundSO[] GoodCoin;   
+    public SoundSO[] BadCoin;    
+
+    [Header("Countdown 3-2-1")]
+    public SoundSO[] Countdown321; 
 }

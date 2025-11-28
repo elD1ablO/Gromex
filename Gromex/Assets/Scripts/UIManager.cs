@@ -119,6 +119,12 @@ public class UIManager : MonoBehaviour
         // Ensure leaderboard UI is hidden at start
         if (_leaderboardUI != null)
             _leaderboardUI.SetActive(false);
+
+        // Play menu sound when UI is ready
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayMenuMusic();
+        }
     }
 
     private void BestScoreUpdate()
@@ -131,6 +137,10 @@ public class UIManager : MonoBehaviour
 
     private void OnStartLivesButton()
     {
+        // Immediately start fading from menu music to Lives mode music
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayLivesModeStart();
+
         _startScreen.SetActive(false);
 
         if (_playerTurnButtonsContainer != null)
@@ -141,6 +151,11 @@ public class UIManager : MonoBehaviour
         if (_countdownCanvas != null && _countdown != null)
         {
             _countdownCanvas.SetActive(true);
+
+            // Play 3-2-1 sound
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayCountdown();
+
             _countdown.StartCountdown(() =>
             {
                 _gameManager?.StartLivesGame();
@@ -155,6 +170,10 @@ public class UIManager : MonoBehaviour
 
     private void OnStartTimeButton()
     {
+        // Immediately start fading from menu music to Time mode music
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayTimeModeStart();
+
         _startScreen.SetActive(false);
 
         EnterTimeMode(_timeRemaining);
@@ -167,6 +186,11 @@ public class UIManager : MonoBehaviour
         if (_countdownCanvas != null && _countdown != null)
         {
             _countdownCanvas.SetActive(true);
+
+            // Play 3-2-1 sound
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayCountdown();
+
             _countdown.StartCountdown(() =>
             {
                 _gameManager?.StartTimeGame(_timeRemaining);
@@ -187,9 +211,6 @@ public class UIManager : MonoBehaviour
     {
         if (_leaderboardUI != null)
             _leaderboardUI.SetActive(true);
-
-        // Hide start buttons while leaderboard is open
-        //SetStartButtonsVisible(false);
 
         // Always open with Time-mode leaderboard by default
         _leaderboardHandler?.ShowLeaderboard(true);
@@ -266,13 +287,10 @@ public class UIManager : MonoBehaviour
 
     public void GoToMenuTokenUsed()
     {
-        // Called after an online game where token has been consumed on the server.
-        // Now we simply return to menu; LoginHandler will open LoginPanel to request a new token.
         _coinSpawner?.StopCoinSpawning();
 
         _startScreen.SetActive(true);
 
-        // Keep start buttons visible; no hard "token used" lock state here.
         SetStartButtonsVisible(true);
         ShowTokenUsedMessage(false);
 
@@ -280,6 +298,9 @@ public class UIManager : MonoBehaviour
         BestScoreUpdate();
 
         _playerController?.ResetToIdle();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMenuMusic();
     }
 
     public void GoToMenu()
@@ -295,6 +316,9 @@ public class UIManager : MonoBehaviour
         BestScoreUpdate();
 
         _playerController?.ResetToIdle();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayMenuMusic();
     }
 
     private void SetStartButtonsVisible(bool visible)
