@@ -15,6 +15,12 @@ public class UIManager : MonoBehaviour
     [Header("Start buttons")]
     [SerializeField] private Button _startLivesGameButton;
     [SerializeField] private Button _startTimeGameButton;
+    [SerializeField] private Button _leaderboardGameButton;
+    [SerializeField] private Button _quitGameButton;
+
+    [Header("Leaderboard  references")]
+    [SerializeField] private GameObject _leaderboardUI;
+    [SerializeField] private Button _backToMainMenuButton;
 
     [Header("Token Used State")]
     [SerializeField] private TMP_Text _tokenUsedText;
@@ -72,6 +78,11 @@ public class UIManager : MonoBehaviour
         if (_startTimeGameButton != null)
             _startTimeGameButton.onClick.AddListener(OnStartTimeButton);
 
+        if (_leaderboardGameButton != null)
+            _leaderboardGameButton.onClick.AddListener(ShowLeaderboard);
+
+        if (_backToMainMenuButton != null)
+            _backToMainMenuButton.onClick.AddListener(HideLeaderboard);
         if (_menuButton != null)
             _menuButton.onClick.AddListener(OpenPauseMenu);
 
@@ -232,6 +243,23 @@ public class UIManager : MonoBehaviour
         BestScoreUpdate();
 
         _playerController?.ResetToIdle();
+    }
+    private void ShowLeaderboard()
+    {
+        if (_leaderboardUI != null)
+            _leaderboardUI.SetActive(true);
+
+        // Ховаємо стартові кнопки
+        SetStartButtonsVisible(false);
+    }
+
+    private void HideLeaderboard()
+    {
+        if (_leaderboardUI != null)
+            _leaderboardUI.SetActive(false);
+
+        // Повертаємо стартові кнопки
+        SetStartButtonsVisible(true);
     }
 
     public void GoToMenu()
