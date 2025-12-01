@@ -128,6 +128,15 @@ public class AudioManager : MonoBehaviour
         PlayRandomSfx(_soundsCollection != null ? _soundsCollection.BadCoin : null);
     }
 
+    /// <summary>
+    /// Plays the same SFX that is used for bad coin (fail) events.
+    /// Use this when we only need the sound without raising gameplay events.
+    /// </summary>
+    public void PlayBadCoinSfx()
+    {
+        PlayRandomSfx(_soundsCollection != null ? _soundsCollection.BadCoin : null);
+    }
+
     #endregion
 
     #region Music logic (single source in music mixer + fade)
@@ -173,7 +182,7 @@ public class AudioManager : MonoBehaviour
             float t = 0f;
             while (t < fadeOutDuration)
             {
-                t += Time.unscaledDeltaTime; // unscaled, so it works even if Time.timeScale = 0
+                t += Time.unscaledDeltaTime;
                 float lerp = Mathf.Clamp01(t / fadeOutDuration);
                 _musicSource.volume = Mathf.Lerp(startVolume, 0f, lerp);
                 yield return null;

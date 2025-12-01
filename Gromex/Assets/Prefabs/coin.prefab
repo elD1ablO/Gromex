@@ -60,7 +60,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 22f211623fcc1f540a586ed2d7ebb273, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -168,4 +168,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a534f0d777d879d4aa9bf87d46bfb41a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Coin
-  _type: 0
+  _isFailCoin: 0
+  _effectDuration: 0.2
+  _jumpHeight: 0.4
+  _shineLocationProp: _ShineLocation
+  _shineSpeed: 1.3
+  _shineStart: 0
+  _shineEnd: 1
+  _blurProp: _BlurIntensity
+  _blurStart: 0
+  _blurEnd: 90

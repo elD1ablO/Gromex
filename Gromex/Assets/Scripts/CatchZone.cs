@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine;
 
 public class CatchZone : MonoBehaviour
 {
@@ -10,19 +11,23 @@ public class CatchZone : MonoBehaviour
 
         if (coin.IsFailCoin)
         {
-            // Fail coin caught:
-            // - Time mode: -5s
+            // Bad coin caught:
+            // - Time mode: -5 seconds
             // - Lives mode: -1 life
             PlayerController.OnFailCatch?.Invoke();
+
+            // Glitch FX + self destroy
+            coin.PlayFailCoinCaughtEffect();
         }
         else
         {
             // Normal coin caught:
-            // - Time mode: +1 score, no penalty for miss
+            // - Time mode: +1 score
             // - Lives mode: +1 score
             PlayerController.OnCoinCatch?.Invoke();
-        }
 
-        Destroy(coin.gameObject);
+            // Jump + shine FX + self destroy
+            coin.PlayCatchSuccessEffect();
+        }
     }
 }

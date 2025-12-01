@@ -20,17 +20,28 @@ public class FailZone : MonoBehaviour
         if (!coin.IsFailCoin)
         {
             // Normal coin missed:
-            // - Time mode: nothing
-            // - Lives mode: -1 life
+            // - Lives mode: lose life + play bad-coin sound via event
+            // - Time mode: ONLY play bad-coin sound (no gameplay event)
             if (!isTimeMode)
             {
+                
                 PlayerController.OnFailCatch?.Invoke();
             }
+            else
+            {
+                // тільки звук, без торкання логіки гри
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlayBadCoinSfx();
+            }
         }
-        // Fail coin missed:
-        // - Time mode: NOTHING
-        // - Lives mode: NOTHING
+        else
+        {
+            // Fail coin missed:
+            // - Time mode: nothing
+            // - Lives mode: nothing
+        }
 
         Destroy(coin.gameObject);
     }
 }
+
