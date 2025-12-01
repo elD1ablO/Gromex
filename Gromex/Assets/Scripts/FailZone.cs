@@ -28,20 +28,17 @@ public class FailZone : MonoBehaviour
                 PlayerController.OnFailCatch?.Invoke();
             }
             else
-            {
-                // тільки звук, без торкання логіки гри
+            {                
                 if (AudioManager.Instance != null)
                     AudioManager.Instance.PlayBadCoinSfx();
             }
         }
         else
         {
-            // Fail coin missed:
-            // - Time mode: nothing
-            // - Lives mode: nothing
+            coin.PlayFailCoinMissEffect();
         }
 
-        Destroy(coin.gameObject);
+        //Destroy(coin.gameObject);
     }
 }
 
